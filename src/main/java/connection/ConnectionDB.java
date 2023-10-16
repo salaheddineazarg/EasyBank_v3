@@ -1,4 +1,4 @@
-package com.jetbrains.easybank_v3.connection;
+package connection;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -7,7 +7,7 @@ public class ConnectionDB {
     private Connection conn;
 
     public ConnectionDB() {
-        String dbname = "easybank_v2";
+        String dbname = "easybank_v3";
         String user = "postgres";
         String password = "sadinzar29";
 
@@ -19,6 +19,7 @@ public class ConnectionDB {
             e.printStackTrace(); // Changed to printStackTrace() for better error handling
             System.out.println("Error Of Connection");
         }
+
     }
 
     public static synchronized ConnectionDB getInstance() {

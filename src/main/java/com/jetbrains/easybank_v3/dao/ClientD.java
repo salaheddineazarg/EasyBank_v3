@@ -2,94 +2,52 @@ package com.jetbrains.easybank_v3.dao;
 
 
 
-import com.jetbrains.easybank_v3.connection.ConnectionDB;
 import com.jetbrains.easybank_v3.dto.Client;
 import com.jetbrains.easybank_v3.interfaces.iClient;
+import connection.ConnectionDB;
 
 import java.sql.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+
+import java.sql.Date;
+import java.util.*;
 
 public class ClientD implements iClient {
-
-
     Connection conn = ConnectionDB.getInstance().getConnection();
-
-
-
-
-
+    Client client = new Client();
     @Override
     public Optional<Client> AddPerson(Client person) {
-
-        Client client = new Client();
-
-        try {
-            conn.setAutoCommit(false);
-            PreparedStatement statement = conn.prepareStatement("INSERT INTO person(firstName,LastName,dateOfBirth,phoneNumber) VALUES(?,?,?,?) RETURNING *");
-
-            // Set values for the parameters
+     try {
+            PreparedStatement statement = conn.prepareStatement("INSERT INTO client(firstname,lastname,dateofbirth,phone,code,adresse) VALUES(?,?,?,?,?,?) RETURNING *");
             statement.setString(1, person.getFirstName());
             statement.setString(2, person.getLastName());
-            statement.setDate(3,Date.valueOf(person.getDateBirth()));
+            statement.setDate(3, Date.valueOf(person.getDateBirth()));
             statement.setString(4, person.getNbPhone());
+            statement.setString(5, person.getCode());
+            statement.setString(6, person.getAdresse());
 
             ResultSet resultSet = statement.executeQuery();
 
-            if (resultSet.next()) {
+            if (resultSet.next()){
 
-                client.setFirstName(resultSet.getString("firstName"));
-                client.setLastName(resultSet.getString("lastName"));
-                client.setDateBirth(resultSet.getDate("dateOfBirth").toLocalDate());
-                client.setNbPhone(resultSet.getString("phoneNumber"));
-
-
+                client.setCode(resultSet.getString("code"));
+                client.setFirstName(resultSet.getString("firstname"));
+                client.setLastName(resultSet.getString("lastname"));
+                client.setDateBirth(resultSet.getDate("dateofbirth").toLocalDate());
+                client.setNbPhone(resultSet.getString("phone"));
+                client.setAdresse(resultSet.getString("adresse"));
             }
+              return  Optional.of(client);
+     }catch (Exception e){
+         e.printStackTrace();
 
-            PreparedStatement statement1 = conn.prepareStatement("INSERT INTO client(code,adresse) VALUES(?,?,?) RETURNING * ");
-
-            statement1.setString(3, person.getAdresse());
-
-            ResultSet resultSet1 = statement1.executeQuery();
-
-
-            if(resultSet1.next())
-            {
-
-                client.setCode(resultSet1.getString("code"));
-
-                client.setAdresse(resultSet1.getString("adresse"));
-
-
-            }
-
-            conn.commit();
-
-            conn.setAutoCommit(true);
-
-
-            return Optional.of(client);
-
-        } catch (SQLException e) {
-            try {
-                // Rollback the transaction in case of an error
-                conn.rollback();
-            } catch (SQLException rollbackException) {
-                rollbackException.printStackTrace();
-            }
-            e.printStackTrace();
-            // Changed to printStackTrace() for better error handling
-            return Optional.empty() ;
-        }
-
-
+     }
+        return Optional.empty();
     }
 
     @Override
     public int DeletePerson(String keyword ) {
         try {
-            PreparedStatement statement = conn.prepareStatement("DELETE FROM person WHERE id = (SELECT id FROM client WHERE code = ?)");
+            PreparedStatement statement = conn.prepareStatement("DELETE FROM client WHERE code =?");
             statement.setString(1,keyword);
 
             int DeleteClient = statement.executeUpdate();
@@ -107,61 +65,29 @@ public class ClientD implements iClient {
 
     @Override
     public Optional<Client> UpdatePerson(Client person) {
-        Client client = new Client();
-        try {
-            conn.setAutoCommit(false);
-            PreparedStatement statementUpdate = conn.prepareStatement("UPDATE person SET firstName = ? ,LastName = ?, dateOfBirth =?,phoneNumber = ? WHERE id= (SELECT id FROM client WHERE code = ?)  RETURNING *");
 
-            // Set values for the parameters
+        try {
+            PreparedStatement statementUpdate = conn.prepareStatement("UPDATE client SET firstname = ? ,lastname = ?, dateofbirth =?,phone = ?,adresse = ? WHERE code = ? RETURNING *");
             statementUpdate.setString(1, person.getFirstName());
             statementUpdate.setString(2, person.getLastName());
             statementUpdate.setDate(3, Date.valueOf(person.getDateBirth())); // Assuming dateBirth is of type LocalDate
             statementUpdate.setString(4, person.getNbPhone());
-
+            statementUpdate.setString(5, person.getAdresse());
+            statementUpdate.setString(6, person.getCode());
             ResultSet resultSet = statementUpdate.executeQuery();
 
             if (resultSet.next()) {
-                client.setFirstName(resultSet.getString("firstName"));
-                client.setLastName(resultSet.getString("lastName"));
-                client.setDateBirth(resultSet.getDate("dateOfBirth").toLocalDate());
-                client.setNbPhone(resultSet.getString("phoneNumber"));
-
-
+                client.setFirstName(resultSet.getString("firstname"));
+                client.setLastName(resultSet.getString("lastname"));
+                client.setDateBirth(resultSet.getDate("dateofbirth").toLocalDate());
+                client.setNbPhone(resultSet.getString("phone"));
+                client.setCode(resultSet.getString("code"));
+                client.setAdresse(resultSet.getString("adresse"));
             }
-
-            PreparedStatement statementUpdate1 = conn.prepareStatement("UPDATE client SET code =?,adresse = ? WHERE code = client.getId  RETURNING * ");
-
-            statementUpdate1.setString(1, person.getCode());
-            statementUpdate1.setString(3, person.getAdresse());
-
-            ResultSet resultSet1 = statementUpdate1.executeQuery();
-
-
-            if (resultSet1.next()) {
-
-                client.setCode(resultSet1.getString("code"));
-
-                client.setAdresse(resultSet1.getString("adresse"));
-
-
-            }
-
-            conn.commit();
-
-            conn.setAutoCommit(true);
-
 
             return Optional.of(client);
 
         } catch (SQLException e) {
-            try {
-                // Rollback the transaction in case of an error
-                conn.rollback();
-            } catch (SQLException rollbackException) {
-                rollbackException.printStackTrace();
-            }
-            // Changed to printStackTrace() for better error handling
-
             e.printStackTrace();
             return Optional.empty();
 
@@ -175,16 +101,16 @@ public class ClientD implements iClient {
 
 
         try {
-            PreparedStatement statementSearch = conn.prepareStatement("SELECT * FROM person INNER JOIN client ON client.id = person.id WHERE client.code = ?");
+            PreparedStatement statementSearch = conn.prepareStatement("SELECT * FROM client WHERE code = ?");
             statementSearch.setString(1, code);
             ResultSet resultSet = statementSearch.executeQuery();
 
             if (resultSet.next()){
                Client clientSearchCode = new Client();
-                clientSearchCode.setFirstName(resultSet.getString("firstName"));
-                clientSearchCode.setLastName( resultSet.getString("lastName"));
-                clientSearchCode.setDateBirth( resultSet.getDate("dateOfBirth").toLocalDate());
-                clientSearchCode.setNbPhone(resultSet.getString("phoneNumber"));
+                clientSearchCode.setFirstName(resultSet.getString("firstname"));
+                clientSearchCode.setLastName( resultSet.getString("lastname"));
+                clientSearchCode.setDateBirth( resultSet.getDate("dateofbirth").toLocalDate());
+                clientSearchCode.setNbPhone(resultSet.getString("phone"));
                 clientSearchCode.setCode( resultSet.getString("code"));
                 clientSearchCode.setAdresse(resultSet.getString("adresse"));
 
@@ -201,33 +127,32 @@ public class ClientD implements iClient {
 
     }
 
-    @Override
-    public Map<String, Object> GetAll() {
+    public List<Client> GetAll() {
+        List<Client> clientList = new ArrayList<>();
 
         try {
-            PreparedStatement statementGetAll = conn.prepareStatement("SELECT * FROM person INNER JOIN client ON client.id = person.id ");
+            PreparedStatement statementGetAll = conn.prepareStatement("SELECT DISTINCT * FROM client");
 
             ResultSet resultSet = statementGetAll.executeQuery();
-            Map<String, Object> clientGetALLMap = new HashMap<>();
-            while (resultSet.next()){
 
-                clientGetALLMap.put("id", resultSet.getInt("id"));
-                clientGetALLMap.put("firstName", resultSet.getString("firstName"));
-                clientGetALLMap.put("lastName", resultSet.getString("lastName"));
-                clientGetALLMap.put("dateBirth", resultSet.getDate("dateOfBirth").toLocalDate());
-                clientGetALLMap.put("nbPhone", resultSet.getString("phoneNumber"));
-                clientGetALLMap.put("code", resultSet.getString("code"));
-                clientGetALLMap.put("adresse", resultSet.getString("adresse"));
+            while (resultSet.next()) {
+                Client client = new Client();
+                client.setFirstName(resultSet.getString("firstname"));
+                client.setLastName(resultSet.getString("lastname"));
+                client.setDateBirth(resultSet.getDate("dateofbirth").toLocalDate());
+                client.setNbPhone(resultSet.getString("phone"));
+                client.setCode(resultSet.getString("code"));
+                client.setAdresse(resultSet.getString("adresse"));
 
-
+                clientList.add(client);
             }
-            return  clientGetALLMap;
-        } catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        return null;
+        return clientList;
     }
+
 
     @Override
     public Map<String, Object> Search(String attributeName, String value) {

@@ -1,7 +1,7 @@
 package com.jetbrains.easybank_v3.dao;
 
 
-import com.jetbrains.easybank_v3.connection.ConnectionDB;
+import connection.ConnectionDB;
 import com.jetbrains.easybank_v3.dto.Agency;
 import com.jetbrains.easybank_v3.interfaces.iAgency;
 

@@ -2,7 +2,7 @@ package com.jetbrains.easybank_v3.dao;
 
 
 
-import com.jetbrains.easybank_v3.connection.ConnectionDB;
+import connection.ConnectionDB;
 import com.jetbrains.easybank_v3.dto.AccountCurrant;
 import com.jetbrains.easybank_v3.dto.Etat;
 import com.jetbrains.easybank_v3.interfaces.iAccountCurrant;
